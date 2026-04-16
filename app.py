@@ -62,6 +62,7 @@ if st.session_state.results:
         st.subheader("【理論値】")
         st.write(f"BIG: {round(i_bc, 1)}回 (1/{round(1/s['big'], 1)})")
         st.write(f"REG: {round(i_rc, 1)}回 (1/{round(1/s['reg'], 1)})")
+        st.write(f"合算: {round(i_total, 1)}回 (1/{round(p_total, 1)})")
         st.subheader("【収支】")
         st.metric("現在の差枚", f"{int(diff)} 枚", f"{int(diff-exp_diff)} 枚 (余剰/欠損)")
 else:

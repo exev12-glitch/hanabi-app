@@ -87,3 +87,9 @@ if executed:
         st.subheader("【ハマり記録】")
         st.write(f"最大ハマり: {h_max}G")
         st.write(f"最大BIG間: {bh_max}G")
+        
+        st.subheader("【収支】")
+        st.metric("現在の差枚", f"{int(diff)} 枚", f"{int(diff-exp_diff)} 枚 (余剰/欠損)")
+
+else:
+    st.info("サイドバーの「シミュレート実行」ボタンを押すと、計算を開始します。")

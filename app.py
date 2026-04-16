@@ -5,7 +5,7 @@ import numpy as np
 
 # --- ページ設定 ---
 st.set_page_config(page_title="新ハナビ シミュレーター", layout="wide")
-st.title("🎇 新ハナビ シミュレーター (詳細解析値版)")
+st.title("🎇 新ハナビ シミュレーター (計算修正版)")
 
 # --- サイドバー設定 ---
 with st.sidebar:
@@ -15,25 +15,12 @@ with st.sidebar:
     st.divider()
     executed = st.button("🚀 シミュレート実行", use_container_width=True)
 
-# --- 送付画像に基づいた詳細スペックデータ ---
-# 払い出し枚数: 風鈴(8枚), 氷(8枚), チェリー(4枚), リプレイ(0枚)
+# 詳細スペック（画像解析値）
 specs = {
-    "設定1": {
-        "big": 1/277.7, "reg": 1/356.2, 
-        "bell": 1/7.7, "ice": 1/51.2, "cherry": 1/16.4, "replay": 1/7.3
-    },
-    "設定2": {
-        "big": 1/268.6, "reg": 1/334.3, 
-        "bell": 1/7.6, "ice": 1/51.8, "cherry": 1/15.3, "replay": 1/7.3
-    },
-    "設定5": {
-        "big": 1/260.1, "reg": 1/315.1, 
-        "bell": 1/7.5, "ice": 1/48.2, "cherry": 1/16.1, "replay": 1/7.3
-    },
-    "設定6": {
-        "big": 1/248.2, "reg": 1/287.4, 
-        "bell": 1/7.3, "ice": 1/49.3, "cherry": 1/15.6, "replay": 1/7.3
-    }
+    "設定1": {"big": 1/277.7, "reg": 1/356.2, "bell": 1/7.7, "ice": 1/51.2, "cherry": 1/16.4, "replay": 1/7.3, "yield": 1.02},
+    "設定2": {"big": 1/268.6, "reg": 1/334.3, "bell": 1/7.6, "ice": 1/51.8, "cherry": 1/15.3, "replay": 1/7.3, "yield": 1.04},
+    "設定5": {"big": 1/260.1, "reg": 1/315.1, "bell": 1/7.5, "ice": 1/48.2, "cherry": 1/16.1, "replay": 1/7.3, "yield": 1.06},
+    "設定6": {"big": 1/248.2, "reg": 1/287.4, "bell": 1/7.3, "ice": 1/49.3, "cherry": 1/15.6, "replay": 1/7.3, "yield": 1.09}
 }
 
 if executed:
@@ -42,47 +29,47 @@ if executed:
     h_b, h_max, bh_b, bh_max = 0, 0, 0, 0
     history = [0]
 
+    # --- シミュレーションループ ---
     for _ in range(games):
-        diff -= 3 # 1G消化
+        diff -= 3  # 3枚投入
         h_b += 1; bh_b += 1
         
         v = random.random()
         
-        # ボーナス抽選
+        # 1. ボーナス抽選
         if v < s["big"]:
-            diff += 202; bc += 1
+            diff += 202 # BIG獲得枚数
+            bc += 1
             h_max = max(h_max, h_b); bh_max = max(bh_max, bh_b)
             h_b = 0; bh_b = 0
+            # RT(ハナビチャレンジ+ゲーム)の簡易加算 (平均純増分をここで一気に乗せる)
+            diff += 40 
         elif v < (s["big"] + s["reg"]):
-            diff += 112; rc += 1
+            diff += 112 # REG獲得枚数
+            rc += 1
             h_max = max(h_max, h_b); h_b = 0
         
-        # 小役抽選（画像データ反映）
+        # 2. 小役抽選（払い出し枚数）
         elif v < (s["big"] + s["reg"] + s["bell"]):
-            diff += 8 # 風鈴合算
+            diff += 8
         elif v < (s["big"] + s["reg"] + s["bell"] + s["ice"]):
-            diff += 8 # 氷合算
+            diff += 8
         elif v < (s["big"] + s["reg"] + s["bell"] + s["ice"] + s["cherry"]):
-            diff += 4 # チェリー合算
+            diff += 4
         elif v < (s["big"] + s["reg"] + s["bell"] + s["ice"] + s["cherry"] + s["replay"]):
-            diff += 3 # リプレイ（3枚払い出しと同等）
+            diff += 3 # リプレイは「3枚戻ってくる（実質消費0）」として処理
             
         history.append(diff)
 
     # 理論値
     i_bc, i_rc = games * s["big"], games * s["reg"]
-    p_total = 1 / (s["big"] + s["reg"])
-    
-    # 簡易的な期待収支ライン（機械割ベース）
-    yield_map = {"設定1": 1.02, "設定2": 1.04, "設定5": 1.06, "設定6": 1.09}
-    exp_diff = (games * 3 * yield_map[setting]) - (games * 3)
+    exp_diff = (games * 3 * s["yield"]) - (games * 3)
 
     # --- 画面表示 ---
     col1, col2 = st.columns([2, 1])
-
     with col1:
         fig, ax = plt.subplots(figsize=(10, 6))
-        color = "red" if "1" in setting else "blue" if "2" in setting else "green" if "5" in setting else "purple"
+        color = "red" if "1" in setting else "blue"
         ax.plot(history, color=color, lw=1.5)
         ax.axhline(0, color="black", lw=1)
         ax.axhline(exp_diff, color="orange", ls="--", lw=1.2)
@@ -98,16 +85,9 @@ if executed:
         st.write(f"合算: {bc+rc}回 (1/{round(games/(bc+rc), 1) if bc+rc>0 else '---'})")
         
         st.subheader("【理論値】")
-        st.write(f"BIG: {i_bc:.1f}回 (1/{round(1/s['big'], 1)})")
-        st.write(f"REG: {i_rc:.1f}回 (1/{round(1/s['reg'], 1)})")
-        st.write(f"合算: {i_bc+i_rc:.1f}回 (1/{round(p_total, 1)})")
-        
-        st.subheader("【ハマり記録】")
-        st.write(f"最大ハマり: {h_max}G")
-        st.write(f"最大BIG間: {bh_max}G")
+        st.write(f"BIG: {round(i_bc, 1)}回 (1/{round(1/s['big'], 1)})")
+        st.write(f"REG: {round(i_rc, 1)}回 (1/{round(1/s['reg'], 1)})")
         
         st.subheader("【収支】")
-        st.metric("現在の差枚", f"{int(diff)} 枚", f"{int(diff-exp_diff)} 枚 (余剰/欠損)")
-
-else:
-    st.info("解析値を反映しました。ボタンを押してスタート！")
+        st.metric("現在の差枚", f"{int(diff)} 枚")
+        st.write(f"期待値: +{int(exp_diff)} 枚")

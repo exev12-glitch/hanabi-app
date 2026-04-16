@@ -14,7 +14,7 @@ with st.sidebar:
     games = st.slider("試行ゲーム数", 1000, 100000, 10000, step=1000)
     
     st.divider()
-    # --- ここに実行ボタンを追加 ---
+    # 実行ボタン
     executed = st.button("🚀 シミュレート実行", use_container_width=True)
     st.write("ボタンを押すと計算を開始します")
 
@@ -26,7 +26,6 @@ specs = {
     "設定6": {"big": 1/248.2, "reg": 1/287.4, "yield": 1.090},
 }
 
-# ボタンが押されたときだけ計算を実行する
 if executed:
     s = specs[setting]
     diff, bc, rc = 0, 0, 0
@@ -34,7 +33,6 @@ if executed:
     history = [0]
     payback = (3 * s["yield"]) - (202 * s["big"]) - (112 * s["reg"])
 
-    # シミュレーション実行
     for _ in range(games):
         diff -= 3; h_b += 1; bh_b += 1
         v = random.random()
@@ -49,8 +47,15 @@ if executed:
             diff += payback
         history.append(diff)
 
-    # 理論値
-    i_bc, i_rc = games * s["big"], games * s["reg"]
+    # 理論値の算出
+    i_bc = games * s["big"]
+    i_rc = games * s["reg"]
+    i_total = i_bc + i_rc
+    # 理論値の確率（分母）
+    p_big = 1 / s["big"]
+    p_reg = 1 / s["reg"]
+    p_total = 1 / (s["big"] + s["reg"])
+    
     exp_diff = (games * 3 * s["yield"]) - (games * 3)
 
     # --- 画面表示 ---
@@ -64,28 +69,21 @@ if executed:
         ax.axhline(exp_diff, color="orange", ls="--", lw=1.2)
         ax.set_xlabel("Games")
         ax.set_ylabel("Diff")
-        # グラフ背景にグリッドを表示
         ax.grid(True, which='both', linestyle='--', alpha=0.5)
         st.pyplot(fig)
 
     with col2:
         st.subheader("【実戦データ】")
-        st.write(f"BIG: {bc}回 (1/{round(games/bc,1) if bc>0 else '---'})")
-        st.write(f"REG: {rc}回 (1/{round(games/rc,1) if rc>0 else '---'})")
-        st.write(f"合算: {bc+rc}回 (1/{round(games/(bc+rc),1) if bc+rc>0 else '---'})")
+        st.write(f"BIG: {bc}回 (1/{round(games/bc, 1) if bc>0 else '---'})")
+        st.write(f"REG: {rc}回 (1/{round(games/rc, 1) if rc>0 else '---'})")
+        st.write(f"合算: {bc+rc}回 (1/{round(games/(bc+rc), 1) if bc+rc>0 else '---'})")
         
         st.subheader("【理論値】")
-        st.write(f"BIG: {i_bc:.1f}回")
-        st.write(f"REG: {i_rc:.1f}回")
-        st.write(f"合算: {i_bc+i_rc:.1f}回")
+        # --- ここに確率表記を追加 ---
+        st.write(f"BIG: {i_bc:.1f}回 (1/{round(p_big, 1)})")
+        st.write(f"REG: {i_rc:.1f}回 (1/{round(p_reg, 1)})")
+        st.write(f"合算: {i_total:.1f}回 (1/{round(p_total, 1)})")
         
         st.subheader("【ハマり記録】")
         st.write(f"最大ハマり: {h_max}G")
         st.write(f"最大BIG間: {bh_max}G")
-        
-        st.subheader("【収支】")
-        st.metric("現在の差枚", f"{int(diff)} 枚", f"{int(diff-exp_diff)} 枚 (余剰/欠損)")
-
-else:
-    # ボタンが押される前の表示
-    st.info("サイドバーの「シミュレート実行」ボタンを押すと、計算を開始します。")

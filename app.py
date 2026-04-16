@@ -3,30 +3,28 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 
-# --- ページ設定 ---
-st.set_page_config(page_title="新ハナビ シミュレーター", layout="wide")
-st.title("🎇 新ハナビ シミュレーター")
+# --- Page Config ---
+st.set_page_config(page_title="Hanabi Sim", layout="wide")
+st.title("🎇 SHIN HANABI Simulator")
 
-# --- サイドバー設定 ---
+# --- Sidebar ---
 with st.sidebar:
-    st.header("設定項目")
-    setting = st.selectbox("設定を選択", ["設定1", "設定2", "設定5", "設定6"])
-    games = st.slider("試行ゲーム数", 1000, 100000, 10000, step=1000)
+    st.header("Settings")
+    setting = st.selectbox("Select Setting", ["Setting 1", "Setting 2", "Setting 5", "Setting 6"])
+    games = st.slider("Total Games", 1000, 100000, 10000, step=1000)
     
     st.divider()
-    # --- 実行ボタン ---
-    executed = st.button("🚀 シミュレート実行", use_container_width=True)
-    st.write("ボタンを押すとレバーオン！")
+    executed = st.button("🚀 SIMULATE", use_container_width=True)
+    st.write("Push to Start!")
 
-# スペックデータ
+# Spec Data
 specs = {
-    "設定1": {"big": 1/277.7, "reg": 1/356.2, "yield": 1.020},
-    "設定2": {"big": 1/268.6, "reg": 1/334.3, "yield": 1.040},
-    "設定5": {"big": 1/260.1, "reg": 1/315.1, "yield": 1.060},
-    "設定6": {"big": 1/248.2, "reg": 1/287.4, "yield": 1.090},
+    "Setting 1": {"big": 1/277.7, "reg": 1/356.2, "yield": 1.020},
+    "Setting 2": {"big": 1/268.6, "reg": 1/334.3, "yield": 1.040},
+    "Setting 5": {"big": 1/260.1, "reg": 1/315.1, "yield": 1.060},
+    "Setting 6": {"big": 1/248.2, "reg": 1/287.4, "yield": 1.090},
 }
 
-# ボタンが押されたときだけ実行、または初回表示
 if executed:
     s = specs[setting]
     diff, bc, rc = 0, 0, 0
@@ -34,7 +32,6 @@ if executed:
     history = [0]
     payback = (3 * s["yield"]) - (202 * s["big"]) - (112 * s["reg"])
 
-    # シミュレーション実行
     for _ in range(games):
         diff -= 3; h_b += 1; bh_b += 1
         v = random.random()
@@ -49,43 +46,48 @@ if executed:
             diff += payback
         history.append(diff)
 
-    # 理論値
     i_bc, i_rc = games * s["big"], games * s["reg"]
-    i_total = i_bc + i_rc
     exp_diff = (games * 3 * s["yield"]) - (games * 3)
 
-    # --- 画面表示 ---
+    # --- Result Display ---
     col1, col2 = st.columns([2, 1])
 
     with col1:
         fig, ax = plt.subplots(figsize=(10, 6))
         color = "red" if "1" in setting else "blue" if "2" in setting else "green" if "5" in setting else "purple"
-        ax.plot(history, color=color, lw=1.5, label="実戦値")
-        ax.axhline(0, color="black", lw=1)
-        ax.axhline(exp_diff, color="orange", ls="--", lw=1.2, label="期待収支")
+        
+        # Plot Graph
+        ax.plot(history, color=color, lw=2, label="Actual")
+        ax.axhline(0, color="black", lw=1.5) # Zero Line
+        ax.axhline(exp_diff, color="orange", ls="--", lw=1.5, label="Expected") # Target Line
+        
+        # Style
+        ax.grid(True, which='both', linestyle='--', alpha=0.5) # 横線（グリッド）追加
         ax.set_xlabel("Games")
-        ax.set_ylabel("Diff")
+        ax.set_ylabel("Payout (Diff)")
         ax.legend()
         st.pyplot(fig)
 
     with col2:
-        st.subheader("【実戦データ】")
-        st.write(f"BIG: {bc}回 (1/{round(games/bc,1) if bc>0 else '---'})")
-        st.write(f"REG: {rc}回 (1/{round(games/rc,1) if rc>0 else '---'})")
-        st.write(f"合算: {bc+rc}回 (1/{round(games/(bc+rc),1) if bc+rc>0 else '---'})")
+        st.subheader("📊 Data")
+        st.write(f"**BIG:** {bc} (1/{round(games/bc,1) if bc>0 else '---'})")
+        st.write(f"**REG:** {rc} (1/{round(games/rc,1) if rc>0 else '---'})")
+        st.write(f"**Total:** {bc+rc} (1/{round(games/(bc+rc),1) if bc+rc>0 else '---'})")
         
-        st.subheader("【理論値】")
-        st.write(f"BIG: {round(i_bc, 1)}回")
-        st.write(f"REG: {round(i_rc, 1)}回")
-        st.write(f"合算: {round(i_total, 1)}回")
+        st.divider()
+        st.subheader("📈 Theory")
+        st.write(f"**BIG:** {round(i_bc, 1)}")
+        st.write(f"**REG:** {round(i_rc, 1)}")
         
-        st.subheader("【ハマり記録】")
-        st.write(f"最大ハマり: {h_max}G")
-        st.write(f"最大BIG間: {bh_max}G")
+        st.divider()
+        st.subheader("⚠️ Max Hamari")
+        st.write(f"**Bonus:** {h_max}G")
+        st.write(f"**BIG-BIG:** {bh_max}G")
         
-        st.subheader("【収支】")
-        st.metric("現在の差枚", f"{int(diff)} 枚")
-        st.write(f"期待枚数: +{int(exp_diff)} 枚")
-        st.write(f"余剰欠損: {int(diff-exp_diff)} 枚")
+        st.divider()
+        st.subheader("💰 Profit")
+        st.metric("Total Diff", f"{int(diff)} 枚")
+        st.write(f"Expected: +{int(exp_diff)} 枚")
+        st.write(f"Luck: {int(diff-exp_diff)} 枚")
 else:
-    st.info("サイドバーの「シミュレート実行」ボタンを押すと、グラフが生成されます。")
+    st.info("Set parameters and push the button to simulate!")

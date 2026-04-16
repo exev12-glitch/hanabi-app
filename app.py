@@ -15,7 +15,7 @@ with st.sidebar:
     st.divider()
     executed = st.button("🚀 シミュレート実行", use_container_width=True)
 
-# 詳細スペック（画像解析値）
+# 詳細スペック（画像解析値に基づく）
 specs = {
     "設定1": {"big": 1/277.7, "reg": 1/356.2, "bell": 1/7.7, "ice": 1/51.2, "cherry": 1/16.4, "replay": 1/7.3, "yield": 1.02},
     "設定2": {"big": 1/268.6, "reg": 1/334.3, "bell": 1/7.6, "ice": 1/51.8, "cherry": 1/15.3, "replay": 1/7.3, "yield": 1.04},
@@ -36,7 +36,7 @@ if executed:
         
         # 1. ボーナス抽選
         if v < s["big"]:
-            diff += 202 + 40 # BIG + RT期待値
+            diff += 202 + 40 # BIG + RT分
             bc += 1
             h_max = max(h_max, h_b); bh_max = max(bh_max, bh_b)
             h_b = 0; bh_b = 0
@@ -52,7 +52,7 @@ if executed:
         elif v < (s["big"] + s["reg"] + s["bell"] + s["ice"] + s["cherry"]):
             diff += 4
         elif v < (s["big"] + s["reg"] + s["bell"] + s["ice"] + s["cherry"] + s["replay"]):
-            diff += 3 # リプレイ(実質0枚消費)
+            diff += 3 # リプレイ
             
         history.append(diff)
 
@@ -75,4 +75,11 @@ if executed:
         ax.grid(True, which='both', linestyle='--', alpha=0.5)
         st.pyplot(fig)
 
-    with col
+    with col2:
+        st.subheader("【実戦データ】")
+        st.write(f"BIG: {bc}回 (1/{round(games/bc, 1) if bc>0 else '---'})")
+        st.write(f"REG: {rc}回 (1/{round(games/rc, 1) if rc>0 else '---'})")
+        st.write(f"合算: {bc+rc}回 (1/{round(games/(bc+rc), 1) if bc+rc>0 else '---'})")
+        
+        st.subheader("【理論値】")
+        st.write(f"BIG: {round(i_bc, 1)}回 (1/{round(1/s['

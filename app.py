@@ -82,4 +82,4 @@ if executed:
         st.write(f"合算: {bc+rc}回 (1/{round(games/(bc+rc), 1) if bc+rc>0 else '---'})")
         
         st.subheader("【理論値】")
-        st.write(f"BIG: {round(i_bc, 1)}回 (1/{round(1/s['
+        st.write(f"BIG: {round(i_bc,
